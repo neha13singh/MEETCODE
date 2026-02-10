@@ -1,0 +1,20 @@
+# 1. Use Python 3.11 on Alpine for a lightweight Python environment
+FROM python:3.11-alpine
+
+# 2. Set the working directory
+WORKDIR /app
+
+# 3. Create a non-root user 'coderunner'
+RUN adduser -D coderunner
+
+# 4. Copy the runner script
+COPY runner.py .
+
+# 5. Switch to non-root user
+USER coderunner
+
+# 6. Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# 7. Default command to run the runner script
+CMD ["python", "runner.py"]
