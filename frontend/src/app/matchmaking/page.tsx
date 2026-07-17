@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Zap, Shield, Swords, Loader2, X } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import LoginModal from '@/components/LoginModal';
 
-export default function MatchmakingPage() {
+function MatchmakingPageContent() {
   const { user, isLoading: authLoading, setIsLoginModalOpen } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -387,5 +387,17 @@ export default function MatchmakingPage() {
         )}
       </Card>
     </div>
+  );
+}
+
+export default function MatchmakingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    }>
+      <MatchmakingPageContent />
+    </Suspense>
   );
 }

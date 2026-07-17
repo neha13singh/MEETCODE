@@ -84,15 +84,21 @@ async def handle_queue_timeout(user_id: str, difficulty: str):
 
 async def get_user_from_token(token: str, db: AsyncSession) -> User:
     try:
+        logger.info(f"Decoding WebSocket token: {token[:15]}... with secret: {settings.SECRET_KEY[:3]}...")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
+            logger.warning("Token payload lacks 'sub' claim")
             return None
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"JWT decode failed: {e}")
         return None
         
     result = await db.execute(select(User).where(User.username == username))
-    return result.scalars().first()
+    user = result.scalars().first()
+    if not user:
+         logger.warning(f"User '{username}' not found in database")
+    return user
 
 @router.websocket("/ws")
 async def websocket_endpoint(
@@ -100,14 +106,22 @@ async def websocket_endpoint(
     token: str, # passed as query param ?token=...
     db: AsyncSession = Depends(get_db)
 ):
+    # Accept connection first so we can log errors and return descriptive codes/messages
+    await websocket.accept()
+    
     # Verify User
     user = await get_user_from_token(token, db)
     if not user:
+        logger.warning(f"Authentication failed for WebSocket client.")
+        try:
+            await websocket.send_json({"event": "auth:error", "data": {"message": "Invalid token or user not found"}})
+        except Exception:
+            pass
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     user_id = str(user.id)
-    await manager.connect(websocket, user_id)
+    await manager.connect(websocket, user_id, accept=False)
 
     try:
         while True:

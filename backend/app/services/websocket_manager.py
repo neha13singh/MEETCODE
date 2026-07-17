@@ -20,8 +20,9 @@ class ConnectionManager:
         # Redis connection for pub/sub (scaling)
         self.redis = redis.from_url(f"redis://{settings.REDIS_HOST}:6379", decode_responses=True)
 
-    async def connect(self, websocket: WebSocket, user_id: str):
-        await websocket.accept()
+    async def connect(self, websocket: WebSocket, user_id: str, accept: bool = True):
+        if accept:
+            await websocket.accept()
         self.active_connections[user_id] = websocket
         logger.info(f"User {user_id} connected via WebSocket")
 
