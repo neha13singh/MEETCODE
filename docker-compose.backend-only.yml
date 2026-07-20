@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: meetcode-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_NAME=MeetCode
+      # Connect to PostgreSQL and Redis running on the host machine (outside Docker)
+      - POSTGRES_SERVER=host.docker.internal
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=meetcode
+      - POSTGRES_PASSWORD=meetcode_password
+      - POSTGRES_DB=meetcode_dev
+      - REDIS_HOST=host.docker.internal
+      - SECRET_KEY=meetcode_dev_secret_key_123456789
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      # Allow local Next.js frontend (running on host port 3000) to make requests
+      - BACKEND_CORS_ORIGINS=["http://localhost:3000"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Mount the Docker socket so the containerized backend can launch the python execution containers on the host
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./logs/backend:/app/logs

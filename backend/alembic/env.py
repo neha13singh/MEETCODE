@@ -19,8 +19,12 @@ from app.db.base import Base  # We need to find where Base is
 from app.models.question import Question, TestCase, CodeTemplate  # Import models to register them
 from app.models.submission import Submission
 from app.models.user import User
+from app.core.config import settings
 
 config = context.config
+
+# Set the SQLAlchemy database URI dynamically from our configuration settings
+config.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -48,10 +52,16 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
+    connect_args = {}
+    db_uri = str(settings.SQLALCHEMY_DATABASE_URI)
+    if "localhost" not in db_uri and "127.0.0.1" not in db_uri and "db" not in db_uri:
+        connect_args["ssl"] = True
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
 
     async with connectable.connect() as connection:

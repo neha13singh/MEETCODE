@@ -36,7 +36,7 @@ MeetCode uses a microservices architecture orchestrated by Docker Compose. Here 
 ### 2. Backend (`meetcode-backend`)
 - **Technology**: FastAPI (Python)
 - **Port**: 8000
-- **Functionality**: The core logic engine. It manages users, handles code submissions, and orchestrates the execution of code in isolated containers.
+- **Functionality**: The core logic engine. It manages users, handles code submissions, and arranges the execution of code in isolated containers.
 - **Why Docker?**: Packages Python dependencies and system tools required to manage the execution containers.
 
 ### 3. Database (`meetcode-db`)
@@ -149,4 +149,3 @@ Access at [http://localhost:3000](http://localhost:3000).
 5. Open a Pull Request
 
 ---
-

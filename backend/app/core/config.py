@@ -34,6 +34,24 @@ class Settings(BaseSettings):
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Union[str, None], values: dict) -> Any:
         if isinstance(v, str):
+            if v.startswith("postgresql://") or v.startswith("postgres://"):
+                if v.startswith("postgres://"):
+                    v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+                elif v.startswith("postgresql://"):
+                    v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            
+            if "?" in v:
+                base_part, query_part = v.split("?", 1)
+                from urllib.parse import parse_qsl, urlencode
+                params = parse_qsl(query_part)
+                filtered_params = [
+                    (k, val) for k, val in params 
+                    if k not in ("sslmode", "channel_binding")
+                ]
+                if filtered_params:
+                    v = f"{base_part}?{urlencode(filtered_params)}"
+                else:
+                    v = base_part
             return v
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",

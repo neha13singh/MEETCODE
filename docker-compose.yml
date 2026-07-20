@@ -1,21 +1,6 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: meetcode-frontend
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
-    depends_on:
-      - backend
-    volumes:
-      - ./logs/frontend:/app/logs
-
   backend:
     build:
       context: ./backend
@@ -26,35 +11,17 @@ services:
       - "8000:8000"
     environment:
       - PROJECT_NAME=MeetCode
-      - POSTGRES_SERVER=db
-      - POSTGRES_USER=meetcode
-      - POSTGRES_PASSWORD=meetcode_password
-      - POSTGRES_DB=meetcode_dev
-      - DATABASE_URL=postgresql://meetcode:meetcode_password@db/meetcode_dev
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI:-postgresql://neondb_owner:npg_Tj5OGUhY2LRX@ep-polished-firefly-ajuywlcw-pooler.c-3.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require}
       - SECRET_KEY=changethis
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - REDIS_HOST=redis
       - BACKEND_CORS_ORIGINS=["http://localhost:3000"]
     depends_on:
-      - db
       - redis
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./logs/backend:/app/logs
-
-  db:
-    image: postgres:15-alpine
-    container_name: meetcode-db
-    restart: always
-    ports:
-      - "55432:5432"
-    environment:
-      - POSTGRES_USER=meetcode
-      - POSTGRES_PASSWORD=meetcode_password
-      - POSTGRES_DB=meetcode_dev
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
@@ -66,5 +33,4 @@ services:
       - redis_data:/data
 
 volumes:
-  postgres_data:
   redis_data:
