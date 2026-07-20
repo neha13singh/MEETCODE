@@ -14,8 +14,8 @@ transports.push(
   })
 );
 
-// File transport only on server (Node.js environment)
-if (typeof window === 'undefined') {
+// File transport only on server (Node.js environment) and not on Vercel (read-only file system)
+if (typeof window === 'undefined' && !process.env.VERCEL) {
   const fs = require('fs');
 
   // Use absolute path for safety in Next.js server context, usually process.cwd() is project root
