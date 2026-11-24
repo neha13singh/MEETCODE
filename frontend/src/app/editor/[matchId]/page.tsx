@@ -34,7 +34,7 @@ function EditorPageContent() {
 
     const [showResultModal, setShowResultModal] = useState(false);
     const [showSurrenderModal, setShowSurrenderModal] = useState(false);
-    const [matchResult, setMatchResult] = useState<{ result: 'win' | 'lose' } | null>(null);
+    const [matchResult, setMatchResult] = useState<{ result: 'win' | 'lose'; mode?: string; points?: number } | null>(null);
 
     const socketRef = useRef<WebSocket | null>(null);
 
@@ -126,7 +126,11 @@ function EditorPageContent() {
                         // so we also handle it in the websocket message just in case
                         if (userIdStr) {
                             const isWin = winnerIdStr === userIdStr;
-                            setMatchResult({ result: isWin ? 'win' : 'lose' });
+                            setMatchResult({
+                                result: isWin ? 'win' : 'lose',
+                                mode: match.mode,
+                                points: isWin ? (match.mode === 'practice' ? 5 : 50) : 0
+                            });
                             setShowResultModal(true);
 
                             setTimeout(() => {
@@ -219,7 +223,11 @@ function EditorPageContent() {
                 const resultColor = isWinner ? "text-emerald-500" : "text-red-500";
 
                 setShowResultModal(true);
-                setMatchResult({ result: isWinner ? 'win' : 'lose' });
+                setMatchResult({
+                    result: isWinner ? 'win' : 'lose',
+                    mode: matchMode,
+                    points: isWinner ? (data.pointsAwarded ?? 50) : 0
+                });
 
                 setTimeout(() => {
                     window.location.href = '/';
@@ -363,8 +371,16 @@ function EditorPageContent() {
             if (result.status === 'accepted') {
                 outputStr += "\nAll test cases passed!";
                 if (matchMode === 'practice') {
-                    setMatchResult({ result: 'win' });
-                    toast.success("Problem Solved! Timer Stopped 🎉");
+                    setMatchResult({
+                        result: 'win',
+                        mode: 'practice',
+                        points: result.points_awarded ?? 0
+                    });
+                    toast.success(
+                        result.points_awarded
+                            ? `Problem Solved! +${result.points_awarded} points 🎉`
+                            : "Problem Solved! Timer Stopped 🎉"
+                    );
                 } else {
                     outputStr += " Checking match status...";
                 }
@@ -405,8 +421,10 @@ function EditorPageContent() {
                                 </h2>
                                 <p className="text-zinc-400 text-lg font-medium mb-8 tracking-tight">
                                     {matchResult.result === 'win'
-                                        ? "Success! You earned +25 points."
-                                        : "Better luck next time. You lost 15 points."}
+                                        ? matchResult.mode === 'practice'
+                                            ? `Problem solved! +${matchResult.points ?? 5} points.`
+                                            : `Victory! +${matchResult.points ?? 50} points.`
+                                        : "Better luck next time. No points awarded."}
                                 </p>
                                 <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
                                     <div className="h-full bg-primary animate-[shimmer_2s_infinite] w-full"></div>

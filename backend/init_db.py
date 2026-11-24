@@ -6,6 +6,7 @@ from app.models.user import User
 from app.models.question import Question, TestCase
 from app.models.match import Match, MatchParticipant
 from app.models.submission import Submission
+from app.models.point_award import PointAward
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

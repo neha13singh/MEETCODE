@@ -9,6 +9,7 @@ from app.db.session import get_db
 from app.models.match import Match
 from app.models.question import Question
 from app.schemas.match import Match as MatchSchema, MatchCreate
+from app.services.points_service import award_match_win
 import logging
 import uuid
 logger = logging.getLogger(__name__)
@@ -168,6 +169,7 @@ async def surrender_match(
     participant.completed_at = datetime.now(timezone.utc)
     
     winner_id = None
+    points_awarded = 0
     if opponent:
         opponent.result = "win"
         match.winner_id = opponent.user_id
@@ -177,6 +179,10 @@ async def surrender_match(
     match.completed_at = datetime.now(timezone.utc)
     
     await db.commit()
+
+    # Winning by surrender earns the same +50 as winning by submission.
+    if opponent:
+        points_awarded = await award_match_win(db, opponent.user_id, match.id)
     
     # Broadcast Completion
     await manager.broadcast_match_event(
@@ -186,11 +192,12 @@ async def surrender_match(
             "matchId": str(match.id),
             "winnerId": winner_id,
             "reason": "surrender",
-            "surrendererId": str(current_user.id)
+            "surrendererId": str(current_user.id),
+            "pointsAwarded": points_awarded
         }
     )
     
-    return {"status": "surrendered"}
+    return {"status": "surrendered", "points_awarded": points_awarded}
 
 @router.post("/{match_id}/timeout")
 async def timeout_match(

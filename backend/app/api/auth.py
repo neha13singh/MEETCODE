@@ -11,6 +11,7 @@ from app.schemas.user import Token, UserLogin
 from app.services.auth_service import AuthService
 from app.db.session import get_db
 
+
 router = APIRouter()
 
 @router.post("/login", response_model=Token)
@@ -55,5 +56,6 @@ async def read_users_me(
         "elo_rating": current_user.elo_rating,
         "total_matches": current_user.total_matches,
         "wins": current_user.wins,
+        "points": current_user.points,
         "created_at": current_user.created_at.isoformat() if current_user.created_at else None
     }

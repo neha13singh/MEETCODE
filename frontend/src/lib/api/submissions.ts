@@ -15,13 +15,17 @@ export interface SubmissionResult {
   details: any[];
 }
 
+export interface SubmissionResponse extends SubmissionResult {
+  points_awarded: number;
+}
+
 export const submissionApi = {
   runCode: async (data: SubmissionRun): Promise<SubmissionResult> => {
     const response = await apiClient.post('/submissions/run', data);
     return response.data;
   },
   
-  submitCode: async (data: SubmissionRun) => {
+  submitCode: async (data: SubmissionRun): Promise<SubmissionResponse> => {
     const response = await apiClient.post('/submissions/submit', data);
     return response.data;
   },

@@ -7,10 +7,12 @@ from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.models.submission import Submission
 from app.models.question import Question, TestCase
+from app.models.match import Match
 from app.models.user import User
 from app.schemas.submission import SubmissionRun, SubmissionCreate, SubmissionResponse, SubmissionResult
 from app.db.session import get_db
 from app.services.execution_service import ExecutionService
+from app.services.points_service import award_match_win, award_practice_solve
 import logging
 logger = logging.getLogger(__name__)
 
@@ -124,6 +126,28 @@ async def submit_code(
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    # A submission without a match (or with a practice match) counts as
+    # practice. Check whether this user has already solved the question so the
+    # +5 first-solve bonus is granted only once.
+    match = None
+    if submission_in.match_id:
+        match_res = await db.execute(
+            select(Match).where(Match.id == submission_in.match_id)
+        )
+        match = match_res.scalars().first()
+    is_practice = match is None or match.mode != "competitive" and match.mode != "private"
+
+    prior_solve = await db.execute(
+        select(Submission.id)
+        .where(
+            Submission.user_id == current_user.id,
+            Submission.question_id == question.id,
+            Submission.status == "accepted",
+        )
+        .limit(1)
+    )
+    is_first_solve = prior_solve.scalar_one_or_none() is None
+
     # Format test cases
     test_cases_payload = [
         {
@@ -173,10 +197,15 @@ async def submit_code(
     db.add(submission)
     await db.commit()
     await db.refresh(submission)
-    
+
+    points_awarded = 0
+    if status_str == "accepted" and is_practice and is_first_solve:
+        points_awarded += await award_practice_solve(db, current_user.id, question.id)
+
     # Return response
     resp = SubmissionResponse.from_orm(submission)
     resp.details = results
+    resp.points_awarded = points_awarded
     
     # Notify Match via WebSocket that a submission occurred
     if submission_in.match_id:
@@ -198,7 +227,6 @@ async def submit_code(
         if status_str == "accepted":
             # Fetch match to check status (avoid double win)
             # This should be wrapped in a transaction or lock in real production
-            from app.models.match import Match, MatchParticipant
             from datetime import datetime
             
             # Re-fetch match with participants
@@ -228,15 +256,24 @@ async def submit_code(
                     db.add(p)
                 
                 await db.commit()
-                
+
+                # +50 for a competitive/private win. Practice solves are
+                # rewarded with +5 above, not here.
+                win_points = 0
+                if match.mode != "practice":
+                    win_points = await award_match_win(db, current_user.id, match.id)
+                    points_awarded += win_points
+
                 # Broadcast WINNER!
                 await manager.broadcast_match_event(
                     match_id=str(submission_in.match_id),
                     event_type="match:completed",
                     data={
                         "winnerId": str(current_user.id),
-                        "result": "win" # This user won
+                        "result": "win", # This user won
+                        "pointsAwarded": win_points
                     }
                 )
     
+    resp.points_awarded = points_awarded
     return resp

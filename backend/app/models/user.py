@@ -18,3 +18,4 @@ class User(Base):
     elo_rating: Mapped[int] = mapped_column(Integer, default=1200)
     total_matches: Mapped[int] = mapped_column(Integer, default=0)
     wins: Mapped[int] = mapped_column(Integer, default=0)
+    points: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

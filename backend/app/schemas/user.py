@@ -25,6 +25,7 @@ class UserInDBBase(UserBase):
     elo_rating: int
     total_matches: int
     wins: int
+    points: int = 0
 
     class Config:
         from_attributes = True

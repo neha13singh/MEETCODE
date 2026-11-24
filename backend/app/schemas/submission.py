@@ -29,6 +29,7 @@ class SubmissionResponse(SubmissionResult):
     created_at: datetime
     code: str
     language: str
-    
+    points_awarded: int = 0
+
     class Config:
         from_attributes = True

@@ -17,7 +17,8 @@ import {
     ArrowRight,
     Search,
     Github,
-    History
+    History,
+    Sparkles
 } from 'lucide-react';
 import { questionApi, Question } from '@/lib/api/questions';
 import { matchesApi } from '@/lib/api/matches';
@@ -234,8 +235,9 @@ export default function ProfilePage() {
                 />
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-12">
                     {[
+                        { label: 'POINTS', value: user?.points ?? 0, icon: Sparkles, color: 'text-amber-400' },
                         { label: 'MATCHES_PLAYED', value: matchHistory.length, icon: Sword, color: 'text-primary' },
                         { label: 'VICTORIES', value: winCount, icon: Trophy, color: 'text-emerald-500' },
                         { label: 'WIN_RATE', value: `${winRate}%`, icon: Zap, color: 'text-secondary' },
