@@ -1722,3 +1722,4 @@ WHERE submissions.user_id = $1::UUID AND submissions.status = $2::VARCHAR
 2026-11-24 19:06:55,633 - uvicorn.access - INFO - 172.18.0.1:44838 - "GET /api/v1/questions/ HTTP/1.1" 200
 2026-11-24 19:06:55,636 - sqlalchemy.engine.Engine - INFO - ROLLBACK
 2026-11-24 19:07:04,772 - uvicorn.access - INFO - 172.18.0.1:47814 - "GET /health HTTP/1.1" 404
+2026-11-24 19:07:34,866 - uvicorn.access - INFO - 172.18.0.1:38410 - "GET /health HTTP/1.1" 404
